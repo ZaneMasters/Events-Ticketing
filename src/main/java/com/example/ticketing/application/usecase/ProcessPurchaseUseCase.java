@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +32,7 @@ public class ProcessPurchaseUseCase {
                     if (reservedTickets.size() == order.getQuantity()) {
                         // Confirm tickets as SOLD
                         return ticketRepository.updateTicketsState(
+                                order.getEventId(),
                                 reservedTickets.stream().map(t -> t.getId()).toList(),
                                 TicketState.SOLD,
                                 order.getId(),

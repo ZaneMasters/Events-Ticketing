@@ -12,7 +12,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +102,7 @@ public class DynamoDbTicketRepository implements TicketRepository {
     }
 
     @Override
-    public Mono<Boolean> updateTicketsState(List<String> ticketIds, TicketState newState, String orderId, LocalDateTime expiration) {
+    public Mono<Boolean> updateTicketsState(String eventId, List<String> ticketIds, TicketState newState, String orderId, LocalDateTime expiration) {
         if (ticketIds.isEmpty()) return Mono.just(true);
 
         return Flux.fromIterable(ticketIds)
@@ -113,6 +112,7 @@ public class DynamoDbTicketRepository implements TicketRepository {
                     // This is simple conditional updating.
                     Map<String, AttributeValue> key = new HashMap<>();
                     key.put("id", AttributeValue.builder().s(ticketId).build());
+                    key.put("eventId", AttributeValue.builder().s(eventId).build());
 
                     Map<String, String> expressionAttributeNames = new HashMap<>();
                     expressionAttributeNames.put("#state", "state");

@@ -28,6 +28,7 @@ public class ReleaseExpiredReservationsUseCase {
                 .flatMap(ticket -> {
                     log.info("Releasing expired ticket: {}", ticket.getId());
                     return ticketRepository.updateTicketsState(
+                            ticket.getEventId(),
                             java.util.List.of(ticket.getId()),
                             TicketState.AVAILABLE,
                             null,

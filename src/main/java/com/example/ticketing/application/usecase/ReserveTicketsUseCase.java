@@ -38,6 +38,7 @@ public class ReserveTicketsUseCase {
                     
                     // Attempt to reserve them
                     return ticketRepository.updateTicketsState(
+                            eventId,
                             availableTickets.stream().map(Ticket::getId).toList(),
                             TicketState.RESERVED,
                             orderId,

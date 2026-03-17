@@ -32,7 +32,7 @@ public class InfrastructureInitializer {
     public void init() {
         CompletableFuture.allOf(
             createTableIfNotExists(EVENTS_TABLE, "id", ScalarAttributeType.S, null, null),
-            createTableIfNotExists(TICKETS_TABLE, "id", ScalarAttributeType.S, null, null),
+            createTableIfNotExists(TICKETS_TABLE, "id", ScalarAttributeType.S, "eventId", ScalarAttributeType.S),
             createTableIfNotExists(ORDERS_TABLE, "id", ScalarAttributeType.S, null, null),
             createQueueIfNotExists(ORDERS_QUEUE)
         ).join();
@@ -59,20 +59,15 @@ public class InfrastructureInitializer {
                     
                 } else {
                     builder.keySchema(KeySchemaElement.builder().attributeName(hashKey).keyType(KeyType.HASH).build());
-                    
-                    if(tableName.equals(TICKETS_TABLE)) {
-                        builder.attributeDefinitions(
-                                AttributeDefinition.builder().attributeName(hashKey).attributeType(hashType).build(),
-                                AttributeDefinition.builder().attributeName("eventId").attributeType(ScalarAttributeType.S).build()
-                        );
-                        builder.globalSecondaryIndexes(GlobalSecondaryIndex.builder()
-                                .indexName("EventIdIndex")
-                                .keySchema(KeySchemaElement.builder().attributeName("eventId").keyType(KeyType.HASH).build())
-                                .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
-                                .build());
-                    } else {
-                        builder.attributeDefinitions(AttributeDefinition.builder().attributeName(hashKey).attributeType(hashType).build());
-                    }
+                    builder.attributeDefinitions(AttributeDefinition.builder().attributeName(hashKey).attributeType(hashType).build());
+                }
+
+                if(tableName.equals(TICKETS_TABLE)) {
+                    builder.globalSecondaryIndexes(GlobalSecondaryIndex.builder()
+                            .indexName("EventIdIndex")
+                            .keySchema(KeySchemaElement.builder().attributeName("eventId").keyType(KeyType.HASH).build())
+                            .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                            .build());
                 }
 
                 dynamoDbClient.createTable(builder.build()).join();

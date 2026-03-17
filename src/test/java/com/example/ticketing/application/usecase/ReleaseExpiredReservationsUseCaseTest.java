@@ -45,7 +45,7 @@ class ReleaseExpiredReservationsUseCaseTest {
         when(ticketRepository.findExpiredReservations(any(LocalDateTime.class)))
                 .thenReturn(Flux.just(ticket));
 
-        when(ticketRepository.updateTicketsState(eq(List.of("t1")), eq(TicketState.AVAILABLE), isNull(), isNull()))
+        when(ticketRepository.updateTicketsState(anyString(), eq(List.of("t1")), eq(TicketState.AVAILABLE), isNull(), isNull()))
                 .thenReturn(Mono.just(true));
 
         when(eventRepository.incrementAvailableTickets("e1", 1))
@@ -58,7 +58,7 @@ class ReleaseExpiredReservationsUseCaseTest {
         Thread.sleep(500);
 
         verify(ticketRepository).findExpiredReservations(any(LocalDateTime.class));
-        verify(ticketRepository).updateTicketsState(eq(List.of("t1")), eq(TicketState.AVAILABLE), isNull(), isNull());
+        verify(ticketRepository).updateTicketsState(eq("e1"), eq(List.of("t1")), eq(TicketState.AVAILABLE), isNull(), isNull());
         verify(eventRepository).incrementAvailableTickets("e1", 1);
     }
     
@@ -73,7 +73,7 @@ class ReleaseExpiredReservationsUseCaseTest {
         when(ticketRepository.findExpiredReservations(any(LocalDateTime.class)))
                 .thenReturn(Flux.just(ticket));
 
-        when(ticketRepository.updateTicketsState(eq(List.of("t1")), eq(TicketState.AVAILABLE), isNull(), isNull()))
+        when(ticketRepository.updateTicketsState(anyString(), eq(List.of("t1")), eq(TicketState.AVAILABLE), isNull(), isNull()))
                 .thenReturn(Mono.just(false));
 
         useCase.execute();
@@ -81,7 +81,7 @@ class ReleaseExpiredReservationsUseCaseTest {
         Thread.sleep(500);
 
         verify(ticketRepository).findExpiredReservations(any(LocalDateTime.class));
-        verify(ticketRepository).updateTicketsState(eq(List.of("t1")), eq(TicketState.AVAILABLE), isNull(), isNull());
+        verify(ticketRepository).updateTicketsState(eq("e1"), eq(List.of("t1")), eq(TicketState.AVAILABLE), isNull(), isNull());
         verify(eventRepository, never()).incrementAvailableTickets(anyString(), anyInt());
     }
 }

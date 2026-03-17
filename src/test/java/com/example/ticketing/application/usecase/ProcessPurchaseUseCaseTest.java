@@ -38,7 +38,7 @@ class ProcessPurchaseUseCaseTest {
         Ticket t1 = Ticket.builder().id("t1").eventId("e1").lockedByOrderId("order1").state(TicketState.RESERVED).build();
 
         when(ticketRepository.findByEventId("e1")).thenReturn(Flux.just(t1));
-        when(ticketRepository.updateTicketsState(List.of("t1"), TicketState.SOLD, "order1", null))
+        when(ticketRepository.updateTicketsState(anyString(), eq(List.of("t1")), eq(TicketState.SOLD), eq("order1"), isNull()))
                 .thenReturn(Mono.just(true));
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
 
@@ -60,7 +60,7 @@ class ProcessPurchaseUseCaseTest {
         StepVerifier.create(useCase.execute(order))
                 .verifyComplete();
 
-        verify(ticketRepository, never()).updateTicketsState(anyList(), any(), anyString(), any());
+        verify(ticketRepository, never()).updateTicketsState(anyString(), anyList(), any(), anyString(), any());
         verify(orderRepository).save(argThat(o -> o.getStatus() == TicketState.AVAILABLE && "Order quantity mismatch with reserved tickets.".equals(o.getErrorMessage())));
     }
 
@@ -70,7 +70,7 @@ class ProcessPurchaseUseCaseTest {
         Ticket t1 = Ticket.builder().id("t1").eventId("e1").lockedByOrderId("order3").state(TicketState.RESERVED).build();
 
         when(ticketRepository.findByEventId("e1")).thenReturn(Flux.just(t1));
-        when(ticketRepository.updateTicketsState(List.of("t1"), TicketState.SOLD, "order3", null))
+        when(ticketRepository.updateTicketsState(anyString(), eq(List.of("t1")), eq(TicketState.SOLD), eq("order3"), isNull()))
                 .thenReturn(Mono.just(false)); // Simulating locking failure
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
 

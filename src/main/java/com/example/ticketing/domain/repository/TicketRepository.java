@@ -18,7 +18,7 @@ public interface TicketRepository {
     
     // Attempt to reserve tickets with optimistic locking
     // Returns the ones successfully updated
-    Mono<Boolean> updateTicketsState(List<String> ticketIds, TicketState newState, String orderId, LocalDateTime expiration);
+    Mono<Boolean> updateTicketsState(String eventId, List<String> ticketIds, TicketState newState, String orderId, LocalDateTime expiration);
     
     // Finds all expired reservations
     Flux<Ticket> findExpiredReservations(LocalDateTime cutoffTime);

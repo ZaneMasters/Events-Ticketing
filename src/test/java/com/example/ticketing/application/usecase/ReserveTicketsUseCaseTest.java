@@ -46,7 +46,7 @@ class ReserveTicketsUseCaseTest {
         Ticket t2 = Ticket.builder().id("t2").eventId("e1").state(TicketState.AVAILABLE).build();
 
         when(ticketRepository.findAvailableByEventId("e1", 2)).thenReturn(Flux.just(t1, t2));
-        when(ticketRepository.updateTicketsState(anyList(), eq(TicketState.RESERVED), anyString(), any()))
+        when(ticketRepository.updateTicketsState(anyString(), anyList(), eq(TicketState.RESERVED), anyString(), any()))
                 .thenReturn(Mono.just(true));
         
         when(eventRepository.decrementAvailableTickets("e1", 2)).thenReturn(Mono.empty());
@@ -67,7 +67,7 @@ class ReserveTicketsUseCaseTest {
         Ticket t1 = Ticket.builder().id("t1").eventId("e1").state(TicketState.AVAILABLE).build();
 
         when(ticketRepository.findAvailableByEventId("e1", 1)).thenReturn(Flux.just(t1));
-        when(ticketRepository.updateTicketsState(anyList(), eq(TicketState.RESERVED), anyString(), any()))
+        when(ticketRepository.updateTicketsState(anyString(), anyList(), eq(TicketState.RESERVED), anyString(), any()))
                 .thenReturn(Mono.just(false)); // Locking failed
 
         StepVerifier.create(useCase.execute("user1", "e1", 1))
