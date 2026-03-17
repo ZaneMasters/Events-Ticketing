@@ -1,5 +1,5 @@
 # 1. Build Stage
-FROM dhi.io/amazoncorretto:25-alpine3.23 AS builder
+FROM amazoncorretto:25 AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -9,21 +9,23 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 
+# Install tar and gzip required by the Maven wrapper
+RUN yum install -y tar gzip && yum clean all
+
 # Fetch dependencies (layer caching)
-RUN ./mvnw dependency:go-offline
+RUN bash ./mvnw dependency:go-offline
 
 # Copy the actual source code
 COPY src ./src
 
 # Build the application, skipping tests for speed in image building (Tests will run in CI before this step)
-RUN ./mvnw clean package -DskipTests
+RUN bash ./mvnw clean package -DskipTests
 
 # 2. Runtime Stage
-FROM dhi.io/amazoncorretto:25-alpine3.23
+# 2. Runtime Stage
+FROM amazoncorretto:25
 
-# Minimal distroless/alpine images may not have /bin/sh for running RUN commands.
-# We skip creating the custom user for this specific image constraint.
-
+# Setup application safely
 WORKDIR /app
 
 # Copy the built artifact from the builder stage
