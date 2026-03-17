@@ -1,5 +1,5 @@
 # 1. Build Stage
-FROM openjdk:25-slim AS builder
+FROM dhi.io/amazoncorretto:25-alpine3.23 AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -19,10 +19,10 @@ COPY src ./src
 RUN ./mvnw clean package -DskipTests
 
 # 2. Runtime Stage
-FROM openjdk:25-slim
+FROM dhi.io/amazoncorretto:25-alpine3.23
 
 # Security: Create and use a non-root user
-RUN groupadd spring && useradd -g spring spring
+RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 WORKDIR /app
