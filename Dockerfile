@@ -1,5 +1,5 @@
 # 1. Build Stage
-FROM openjdk:25-slim-bullseye AS builder
+FROM openjdk:25-slim AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -19,7 +19,7 @@ COPY src ./src
 RUN ./mvnw clean package -DskipTests
 
 # 2. Runtime Stage
-FROM openjdk:25-slim-bullseye
+FROM openjdk:25-slim
 
 # Security: Create and use a non-root user
 RUN groupadd spring && useradd -g spring spring
