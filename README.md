@@ -125,6 +125,7 @@ Los tests unitarios integran simulación reactiva de componentes.
 ### 🚀 CI/CD y despliegue Continuo (GitHub Actions)
 
 El repositorio cuenta con una pipeline (`aws-deploy.yml`) automatizada que se encarga de:
+
 1. Validar la compilación, ejecutar las pruebas unitarias y de integración y verificar exitosamente la cobertura de código JaCoCo por encima del límite (90%).
 2. Construir la imagen de Docker basada en el `Dockerfile`.
 3. Autorizar y autenticar con perfiles seguros (OIDC) para subir la imagen generada al AWS Elastic Container Registry (ECR).

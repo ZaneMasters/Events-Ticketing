@@ -11,9 +11,11 @@ import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import java.util.concurrent.CompletableFuture;
 
 @Configuration
+@Profile("local")
 @RequiredArgsConstructor
 @Slf4j
 public class InfrastructureInitializer {
