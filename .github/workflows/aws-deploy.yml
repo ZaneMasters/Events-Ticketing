@@ -27,6 +27,9 @@ jobs:
           distribution: 'oracle'
           cache: maven
 
+      - name: Make Maven Wrapper Executable
+        run: chmod +x ./mvnw
+
       - name: Run Unit Tests
         run: ./mvnw clean test
 
