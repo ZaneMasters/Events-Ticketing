@@ -20,25 +20,36 @@ public class AwsConfig {
     @Value("${aws.endpoint:http://localhost:4566}")
     private String endpoint;
 
+    @Value("${spring.profiles.active:local}")
+    private String activeProfile;
+
     @Bean
     public DynamoDbAsyncClient dynamoDbAsyncClient() {
-        return DynamoDbAsyncClient.builder()
-                .region(Region.of(region))
-                .endpointOverride(URI.create(endpoint))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create("test", "test")
-                ))
-                .build();
+        var builder = DynamoDbAsyncClient.builder()
+                .region(Region.of(region));
+
+        if ("local".equalsIgnoreCase(activeProfile)) {
+            builder.endpointOverride(URI.create(endpoint))
+                   .credentialsProvider(StaticCredentialsProvider.create(
+                           AwsBasicCredentials.create("test", "test")
+                   ));
+        }
+
+        return builder.build();
     }
 
     @Bean
     public SqsAsyncClient sqsAsyncClient() {
-        return SqsAsyncClient.builder()
-                .region(Region.of(region))
-                .endpointOverride(URI.create(endpoint))
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create("test", "test")
-                ))
-                .build();
+        var builder = SqsAsyncClient.builder()
+                .region(Region.of(region));
+
+        if ("local".equalsIgnoreCase(activeProfile)) {
+            builder.endpointOverride(URI.create(endpoint))
+                   .credentialsProvider(StaticCredentialsProvider.create(
+                           AwsBasicCredentials.create("test", "test")
+                   ));
+        }
+
+        return builder.build();
     }
 }
