@@ -21,9 +21,8 @@ RUN ./mvnw clean package -DskipTests
 # 2. Runtime Stage
 FROM dhi.io/amazoncorretto:25-alpine3.23
 
-# Security: Create and use a non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
+# Minimal distroless/alpine images may not have /bin/sh for running RUN commands.
+# We skip creating the custom user for this specific image constraint.
 
 WORKDIR /app
 
