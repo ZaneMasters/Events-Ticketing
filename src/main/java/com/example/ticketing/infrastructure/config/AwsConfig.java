@@ -11,6 +11,9 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.net.URI;
 
+import org.springframework.core.env.Environment;
+import java.util.Arrays;
+
 @Configuration
 public class AwsConfig {
 
@@ -20,15 +23,12 @@ public class AwsConfig {
     @Value("${aws.endpoint:http://localhost:4566}")
     private String endpoint;
 
-    @Value("${spring.profiles.active:local}")
-    private String activeProfile;
-
     @Bean
-    public DynamoDbAsyncClient dynamoDbAsyncClient() {
+    public DynamoDbAsyncClient dynamoDbAsyncClient(Environment env) {
         var builder = DynamoDbAsyncClient.builder()
                 .region(Region.of(region));
 
-        if ("local".equalsIgnoreCase(activeProfile)) {
+        if (isLocalProfileActive(env)) {
             builder.endpointOverride(URI.create(endpoint))
                    .credentialsProvider(StaticCredentialsProvider.create(
                            AwsBasicCredentials.create("test", "test")
@@ -39,11 +39,11 @@ public class AwsConfig {
     }
 
     @Bean
-    public SqsAsyncClient sqsAsyncClient() {
+    public SqsAsyncClient sqsAsyncClient(Environment env) {
         var builder = SqsAsyncClient.builder()
                 .region(Region.of(region));
 
-        if ("local".equalsIgnoreCase(activeProfile)) {
+        if (isLocalProfileActive(env)) {
             builder.endpointOverride(URI.create(endpoint))
                    .credentialsProvider(StaticCredentialsProvider.create(
                            AwsBasicCredentials.create("test", "test")
@@ -51,5 +51,11 @@ public class AwsConfig {
         }
 
         return builder.build();
+    }
+
+    private boolean isLocalProfileActive(Environment env) {
+        String[] profiles = env.getActiveProfiles();
+        if (profiles == null || profiles.length == 0) return true;
+        return Arrays.asList(profiles).contains("local");
     }
 }
