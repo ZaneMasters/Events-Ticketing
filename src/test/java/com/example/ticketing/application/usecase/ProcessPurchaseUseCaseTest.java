@@ -3,7 +3,6 @@ package com.example.ticketing.application.usecase;
 import com.example.ticketing.domain.model.Order;
 import com.example.ticketing.domain.model.Ticket;
 import com.example.ticketing.domain.model.TicketState;
-import com.example.ticketing.domain.repository.EventRepository;
 import com.example.ticketing.domain.repository.OrderRepository;
 import com.example.ticketing.domain.repository.TicketRepository;
 import org.junit.jupiter.api.Test;
@@ -29,8 +28,6 @@ class ProcessPurchaseUseCaseTest {
     private OrderRepository orderRepository;
     @Mock
     private TicketRepository ticketRepository;
-    @Mock(name = "eventRepository")
-    private EventRepository ignoredRepositoryForTestMocksRule;
 
     @InjectMocks
     private ProcessPurchaseUseCase useCase;
@@ -49,5 +46,37 @@ class ProcessPurchaseUseCaseTest {
                 .verifyComplete();
 
         verify(orderRepository).save(argThat(o -> o.getStatus() == TicketState.SOLD));
+    }
+
+    @Test
+    void shouldFailPurchaseWhenTicketsCountMismatch() {
+        Order order = Order.builder().id("order2").eventId("e1").quantity(2).status(TicketState.PENDING_CONFIRMATION).build();
+        Ticket t1 = Ticket.builder().id("t1").eventId("e1").lockedByOrderId("order2").state(TicketState.RESERVED).build();
+        // Missing the second ticket
+
+        when(ticketRepository.findByEventId("e1")).thenReturn(Flux.just(t1));
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+
+        StepVerifier.create(useCase.execute(order))
+                .verifyComplete();
+
+        verify(ticketRepository, never()).updateTicketsState(anyList(), any(), anyString(), any());
+        verify(orderRepository).save(argThat(o -> o.getStatus() == TicketState.AVAILABLE && "Order quantity mismatch with reserved tickets.".equals(o.getErrorMessage())));
+    }
+
+    @Test
+    void shouldFailPurchaseWhenUpdateTicketsStateFails() {
+        Order order = Order.builder().id("order3").eventId("e1").quantity(1).status(TicketState.PENDING_CONFIRMATION).build();
+        Ticket t1 = Ticket.builder().id("t1").eventId("e1").lockedByOrderId("order3").state(TicketState.RESERVED).build();
+
+        when(ticketRepository.findByEventId("e1")).thenReturn(Flux.just(t1));
+        when(ticketRepository.updateTicketsState(List.of("t1"), TicketState.SOLD, "order3", null))
+                .thenReturn(Mono.just(false)); // Simulating locking failure
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+
+        StepVerifier.create(useCase.execute(order))
+                .verifyComplete();
+
+        verify(orderRepository).save(argThat(o -> o.getStatus() == TicketState.AVAILABLE && "Failed to update tickets to SOLD status.".equals(o.getErrorMessage())));
     }
 }

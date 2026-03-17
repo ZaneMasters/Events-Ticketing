@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 @With
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
 public class Event {
     private String id;
     private String name;

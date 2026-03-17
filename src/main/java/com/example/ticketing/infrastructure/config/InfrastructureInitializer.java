@@ -11,6 +11,8 @@ import software.amazon.awssdk.services.sqs.model.CreateQueueRequest;
 
 import java.util.List;
 
+import java.util.concurrent.CompletableFuture;
+
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
@@ -26,14 +28,16 @@ public class InfrastructureInitializer {
 
     @PostConstruct
     public void init() {
-        createTableIfNotExists(EVENTS_TABLE, "id", ScalarAttributeType.S, null, null);
-        createTableIfNotExists(TICKETS_TABLE, "id", ScalarAttributeType.S, "eventId", ScalarAttributeType.S);
-        createTableIfNotExists(ORDERS_TABLE, "id", ScalarAttributeType.S, null, null);
-        createQueueIfNotExists(ORDERS_QUEUE);
+        CompletableFuture.allOf(
+            createTableIfNotExists(EVENTS_TABLE, "id", ScalarAttributeType.S, null, null),
+            createTableIfNotExists(TICKETS_TABLE, "id", ScalarAttributeType.S, null, null),
+            createTableIfNotExists(ORDERS_TABLE, "id", ScalarAttributeType.S, null, null),
+            createQueueIfNotExists(ORDERS_QUEUE)
+        ).join();
     }
 
-    private void createTableIfNotExists(String tableName, String hashKey, ScalarAttributeType hashType, String sortKey, ScalarAttributeType sortType) {
-        dynamoDbClient.listTables().thenAccept(response -> {
+    private CompletableFuture<Void> createTableIfNotExists(String tableName, String hashKey, ScalarAttributeType hashType, String sortKey, ScalarAttributeType sortType) {
+        return dynamoDbClient.listTables().thenAccept(response -> {
             if (!response.tableNames().contains(tableName)) {
                 log.info("Creating table {}", tableName);
                 
@@ -51,17 +55,22 @@ public class InfrastructureInitializer {
                             AttributeDefinition.builder().attributeName(sortKey).attributeType(sortType).build()
                     );
                     
-                    // Add index for querying tickets by eventId alone if we use a composed key
-                    if(tableName.equals(TICKETS_TABLE)) {
-                       builder.globalSecondaryIndexes(GlobalSecondaryIndex.builder()
-                               .indexName("EventIdIndex")
-                               .keySchema(KeySchemaElement.builder().attributeName("eventId").keyType(KeyType.HASH).build())
-                               .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
-                               .build());
-                    }
                 } else {
                     builder.keySchema(KeySchemaElement.builder().attributeName(hashKey).keyType(KeyType.HASH).build());
-                    builder.attributeDefinitions(AttributeDefinition.builder().attributeName(hashKey).attributeType(hashType).build());
+                    
+                    if(tableName.equals(TICKETS_TABLE)) {
+                        builder.attributeDefinitions(
+                                AttributeDefinition.builder().attributeName(hashKey).attributeType(hashType).build(),
+                                AttributeDefinition.builder().attributeName("eventId").attributeType(ScalarAttributeType.S).build()
+                        );
+                        builder.globalSecondaryIndexes(GlobalSecondaryIndex.builder()
+                                .indexName("EventIdIndex")
+                                .keySchema(KeySchemaElement.builder().attributeName("eventId").keyType(KeyType.HASH).build())
+                                .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                                .build());
+                    } else {
+                        builder.attributeDefinitions(AttributeDefinition.builder().attributeName(hashKey).attributeType(hashType).build());
+                    }
                 }
 
                 dynamoDbClient.createTable(builder.build()).join();
@@ -69,12 +78,12 @@ public class InfrastructureInitializer {
             }
         }).exceptionally(e -> {
             log.error("Failed to initialize table {}", tableName, e);
-            return null;
+            throw new RuntimeException("Init failed", e);
         });
     }
 
-    private void createQueueIfNotExists(String queueName) {
-        sqsClient.listQueues().thenAccept(response -> {
+    private CompletableFuture<Void> createQueueIfNotExists(String queueName) {
+        return sqsClient.listQueues().thenAccept(response -> {
             if (response.queueUrls().stream().noneMatch(url -> url.contains(queueName))) {
                 log.info("Creating queue {}", queueName);
                 sqsClient.createQueue(CreateQueueRequest.builder().queueName(queueName).build()).join();

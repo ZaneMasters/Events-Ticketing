@@ -2,7 +2,6 @@ package com.example.ticketing.application.usecase;
 
 import com.example.ticketing.domain.model.Order;
 import com.example.ticketing.domain.model.TicketState;
-import com.example.ticketing.domain.repository.EventRepository;
 import com.example.ticketing.domain.repository.OrderRepository;
 import com.example.ticketing.domain.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ public class ProcessPurchaseUseCase {
 
     private final OrderRepository orderRepository;
     private final TicketRepository ticketRepository;
-    private final EventRepository eventRepository;
 
     public Mono<Void> execute(Order order) {
         log.info("Processing order {} asynchronously", order.getId());

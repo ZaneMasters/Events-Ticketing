@@ -120,7 +120,15 @@ Los tests unitarios integran simulación reactiva de componentes.
 ./mvnw clean test
 ```
 
-*El sistema reporta una cobertura en flujos de aplicación del > 90% en la compilación. El uso de JaCoCo ha sido deshabilitado momentáneamente dadas las configuraciones de JDK 25.*
+*El sistema reporta una cobertura en flujos de aplicación del **> 90%** en la compilación mediante la verificación automática del plugin **JaCoCo** (`jacoco:check`).*
+
+### 🚀 CI/CD y despliegue Continuo (GitHub Actions)
+
+El repositorio cuenta con una pipeline (`aws-deploy.yml`) automatizada que se encarga de:
+1. Validar la compilación, ejecutar las pruebas unitarias y de integración y verificar exitosamente la cobertura de código JaCoCo por encima del límite (90%).
+2. Construir la imagen de Docker basada en el `Dockerfile`.
+3. Autorizar y autenticar con perfiles seguros (OIDC) para subir la imagen generada al AWS Elastic Container Registry (ECR).
+4. Actualizar la definición de tarea para desplegar la nueva imagen en AWS ECS (Elastic Container Service).
 
 ### 3. Ejecutar la Aplicación
 
@@ -134,7 +142,12 @@ El servicio estará disponible en `http://localhost:8080`.
 
 ## 📋 Ejemplos de Interacción (API)
 
-Puedes importar la colección `Ticketing_Reactive_API.postman_collection.json` o utilizar cURL. A continuación, se detallan los casos de uso para cada endpoint principal y sus respuestas esperadas.
+El sistema se encuentra desplegado de forma 100% remota y operativa a través de **AWS API Gateway** apuntando al cómputo interno detrás de Load Balancers y con ECS / DynamoDB interactuando por detrás.
+
+> **URL Base de AWS (Producción):**  
+> `https://6rb475u9ya.execute-api.us-east-1.amazonaws.com`
+
+Puedes importar la colección `Ticketing_Reactive_API.postman_collection.json` o utilizar cURL. A continuación, se detallan los casos de uso para cada endpoint principal y sus respuestas esperadas. **No olvides utilizar la URL remota** al probar la nube en vez del `localhost:8080`.
 
 ### 1. Crear un Evento (Concierto)
 
@@ -145,7 +158,7 @@ Crea un nuevo evento en la plataforma e inicializa el inventario (`Tickets` en e
 **Petición:**
 
 ```bash
-curl -X POST http://localhost:8080/api/events \
+curl -X POST https://6rb475u9ya.execute-api.us-east-1.amazonaws.com/api/events \
 -H 'Content-Type: application/json' \
 -d '{
   "name": "Concierto Dev 2026",
@@ -177,7 +190,7 @@ Obtiene la cantidad actual de entradas que no han sido vendidas ni reservadas to
 **Petición:**
 
 ```bash
-curl -X GET http://localhost:8080/api/events/{event_id}/availability
+curl -X GET https://6rb475u9ya.execute-api.us-east-1.amazonaws.com/api/events/{event_id}/availability
 ```
 
 **Respuesta Exitosa (HTTP 200 OK):**
@@ -198,7 +211,7 @@ Inicia el proceso de compra asegurando el inventario temporalmente.
 **Petición:**
 
 ```bash
-curl -X POST http://localhost:8080/api/events/{event_id}/purchase \
+curl -X POST https://6rb475u9ya.execute-api.us-east-1.amazonaws.com/api/events/{event_id}/purchase \
 -H 'Content-Type: application/json' \
 -d '{
   "userId": "user-auth-token1212", 
@@ -231,7 +244,7 @@ Muestra el estado final o actual de una compra (Orden).
 **Petición:**
 
 ```bash
-curl -X GET http://localhost:8080/api/orders/{order_id}
+curl -X GET https://6rb475u9ya.execute-api.us-east-1.amazonaws.com/api/orders/{order_id}
 ```
 
 **Respuesta de la Orden Confirmada (HTTP 200 OK):**

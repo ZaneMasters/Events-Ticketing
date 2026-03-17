@@ -10,6 +10,8 @@ import java.util.List;
 @Data
 @Builder
 @With
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
 public class Order {
     private String id;
     private String userId;

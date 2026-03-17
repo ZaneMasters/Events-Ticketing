@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,7 +41,7 @@ class CreateEventUseCaseTest {
                 .build();
 
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
-        when(ticketRepository.saveAll(any(List.class))).thenReturn(reactor.core.publisher.Flux.empty());
+        when(ticketRepository.saveAll(anyList())).thenReturn(reactor.core.publisher.Flux.empty());
 
         StepVerifier.create(createEventUseCase.execute(event))
                 .expectNextMatches(savedEvent -> savedEvent.getId() != null &&
